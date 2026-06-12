@@ -1,0 +1,18 @@
+# This file creates config maps based on the data supplied in the values file
+# Refer to `.configMaps` in `values.yaml`
+
+{{- $releaseName := include "metadata.releaseName" . -}}
+{{- $labels := include "metadata.labels" . -}}
+{{- range $k, $v := .Values.configMaps }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-%s" $releaseName $k }}
+  labels:
+    {{- $labels | nindent 4 }}
+data:
+  {{- range $dk, $dv := $v }}
+  {{ $dk }}: {{ $dv }}
+  {{- end }}
+{{- end }}

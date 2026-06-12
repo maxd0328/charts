@@ -1,0 +1,14 @@
+# This file contains metadata about the chart
+apiVersion: v2
+name: gitops
+description: A project-agnostic chart for redeployable and maintainable GitOps configurations
+
+# Can be either `application` or `library`. For our purposes this is an application chart
+type: application
+
+# The version of the chart itself. Bump this every time the chart is changed, following
+# semantic versioning rules
+version: 0.1.0
+
+# This chart does not encapsulate any applications for which it takes responsibility
+appVersion: ''

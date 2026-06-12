@@ -1,0 +1,18 @@
+# This file creates the application's service resource, if requested
+# Refer to `.service` in `values.yaml`
+
+{{- if .Values.service.enabled -}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "metadata.releaseName" . }}
+  labels:
+    {{- include "metadata.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "metadata.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- toYaml .Values.service.ports | nindent 4 }}
+{{- end -}}

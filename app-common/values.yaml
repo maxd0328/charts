@@ -1,0 +1,286 @@
+# This file contains the default values for this Helm chart, as well as examples on how this Helm chart
+# should be used. It is intended to be used as a reference for developers looking to create specific
+# instantiations of the chart for their applications
+
+# -----------------------------------------------------------------------------------------------------------
+# Global properties for the Helm chart that affect all generated resources
+
+global:
+  # Name of the application being deployed. It should uniquely identify an application, not each release of
+  # an application
+  #
+  # Note: This is not currently used but is reserved for future use if necessary
+  name: ''
+
+  # An optional override to the name of the Helm release
+  releaseNameOverride: ''
+
+# -----------------------------------------------------------------------------------------------------------
+# Information about the service account used by this Helm chart
+
+serviceAccount:
+  # Whether or not to create a new service account with the name given by `serviceAccount.name`
+  create: false
+
+  # The name of the service account to use (or create if `serviceAccount.create` is enabled). If no value is
+  # given, this will default to `default` if `serviceAccount.create` is false. Otherwise, a service account
+  # with the qualified name of the release will be created
+  name: ''
+
+# -----------------------------------------------------------------------------------------------------------
+# Information about the where and how to pull the application's image
+
+image:
+  registry: ''
+  repository: ''
+  tag: ''
+
+  # The pull policy for the application's image. Defaults to `IfNotPresent`
+  pullPolicy: IfNotPresent
+
+  # Optional image pull secrets
+  imagePullSecrets: {}
+
+# -----------------------------------------------------------------------------------------------------------
+# Details about the application deployment
+
+deployment:
+  # The number of replicas to include in the deployment
+  replicaCount: 1
+
+  # Annotations to apply to the deployment's pods given as a string to string mapping
+  podAnnotations: {}
+
+  # Ports exposed by the pods
+  ports: []
+    # - name: http
+    #   containerPort: 8080
+    #   protocol: TCP
+
+  # Probes for the primary container of the deployment's pods
+  # (See https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes)
+  probes:
+    startup: {}
+    readiness: {}
+    liveness: {}
+
+  # Environment variables for the primary container
+  # (See https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container)
+  env: []
+  envFrom: []
+
+  # Volume mounts of ephemeral volumes (`.deployment.volumes`) to the primary container
+  volumeMounts: []
+    # - name: example-volume
+    #   mountPath: /app/example/path
+
+  # Resource limits for the primary container of the deployment's pods
+  resources: {}
+    # limits:
+    #   cpu: 50m        # NOTE: It is not advised to assign CPU limits
+    #   memory: 100Mi
+
+    # requests:
+    #   cpu: 10m
+    #   memory: 50Mi
+
+  # Optional init containers to be run with each pod in the deployment
+  # (See https://kubernetes.io/docs/concepts/workloads/init-containers)
+  initContainers: []
+
+  # Optional ephemeral volumes to be associated with the pod
+  # (See https://kubernetes.io/docs/concepts/storage/volumes)
+  volumes: []
+
+  # Security context to apply to the deployment's running containers
+  securityContext:
+    # Asserts that the container is running as a non-root user
+    runAsNonRoot: true
+    
+    # # Whether or not the containers must drop their capabilities
+    # # (See https://man7.org/linux/man-pages/capabilities.7.html)
+    # capabilities:
+    #   drop:
+    #     - ALL
+
+    # readOnlyRootFilesystem: true
+
+  # Custom affinities for the deployment
+  # (See https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity)
+  affinity: {}
+
+  # Custom node selectors for the deployment
+  # (See https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector)
+  nodeSelector: {}
+
+  # Custom tolerations to node taints
+  # (See https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration)
+  tolerations: []
+
+# -----------------------------------------------------------------------------------------------------------
+# Details about the application's service
+
+service:
+  # Whether or not to include a service
+  enabled: false
+
+  # Type of service to use, either `ClusterIP`, `NodePort`, or `LoadBalancer`
+  # (See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
+  type: ClusterIP
+
+  # The ports to expose on the service and how to map them to ports in the deployment's pods
+  ports: []
+    # - port: 80
+    #   targetPort: 8080
+    #   protocol: TCP
+    #   name: http
+
+# -----------------------------------------------------------------------------------------------------------
+# Details about the application's ingress
+
+ingress:
+  # Whether or not to include an ingress
+  enabled: false
+
+  # Ingress class name
+  className: ''
+
+  # Ingress annotations
+  annotations: {} 
+
+  # List of hosts and their associated routes
+  hosts: []
+    # - host: example.com
+    #   # This list only allows routing to the application's service, and thus requires `.service.enabled`
+    #   paths:
+    #     - path: /v1/example
+    #       pathType: ImplementationSpecific
+    #       port:
+    #         # Specify only one of the following two properties
+    #         number: 80
+    #         name: http
+    #   # This list allows for arbitrary backends, following the standard Ingress structure
+    #   externalPaths:
+    #     - path: /v1/example
+    #       pathType: ImplementationSpecific
+    #       backend:
+    #         service:
+    #           name: example-external-service
+    #           port:
+    #             # Specify only one of the following two properties
+    #             number: 80
+    #             name: http
+
+  # List of TLS certificates associated with their hosts
+  tls: []
+    # - secretName: example-cert-secret
+    #   hosts:
+    #     - example.com
+
+# -----------------------------------------------------------------------------------------------------------
+# Details about the application's HTTPProxy instance (specific to Contour)
+
+proxy:
+  # Whether or not to include a Contour HTTPProxy
+  enabled: false
+
+  # Optional Ingress class name
+  ingressClassName: ''
+
+  # The hostname associated with this proxy, unlike Ingress there can only be one per proxy
+  host: ''
+
+  tls: {}
+    # secretName: example-cert-secret
+    # clientValidation:                     # Optional mTLS configuration
+    #   caSecret: example-ca-cert-secret    # CA certificate to verify client certs against
+    #   crlSecret: example-crl-secret       # Optional client revocation list
+    #   optionalClientCertificate: false    # If true, verificiation only happens if it exists
+    #
+    #   # Use this attribute to enable client certificate forwarding in the `x-forwarded-client-cert` header
+    #   # See https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_conn_man/headers/#x-forwarded-client-cert
+    #   forwardClientCertificate:
+    #     subject: true
+    #     cert: true
+    #     chain: true
+    #     dns: true
+    #     uri: true
+    #     hash: true
+    #     by: true
+
+  # List of routes for this proxy
+  # This list only allows routing to the application's service, and therefore requires `.service.enabled`
+  routes: []
+    # - conditions:             # See https://projectcontour.io/docs/1.33/config/request-routing/#conditions
+    #     - prefix: /v1/example
+    #   servicePort: 80
+
+  # This list allows for arbitrary backends, following the standard structure of HTTPProxy
+  externalRoutes: []
+    # - conditions:             # See https://projectcontour.io/docs/1.33/config/request-routing/#conditions
+    #     - prefix: /v1/example
+    #   services:
+    #     - name: example-external-service
+    #       port: 80
+
+# -----------------------------------------------------------------------------------------------------------
+# Details about application autoscaling
+
+autoscaling:
+  # Whether or not to enable autoscaling for this application
+  enabled: false
+
+  # Replica count constraints
+  minReplicas: 1
+  maxReplicas: 20
+
+  # Targets for the autoscaling policy
+  # targetCPUUtilizationPercentage: 75
+  # targetMemoryUtilizationPercentage: 75
+
+# -----------------------------------------------------------------------------------------------------------
+# Details about the application's network policies
+
+netpol:
+  # Whether or not to enable network policies for this application
+  enabled: false
+
+  # List of ingress policies
+  # (See https://kubernetes.io/docs/concepts/services-networking/networking-policies)
+  ingress: []
+
+  # List of egress policies
+  # (See above)
+  egress: []
+
+# -----------------------------------------------------------------------------------------------------------
+# Config Maps to be deployed
+
+configMaps:
+  # exampleConfigMap:
+  #   key1: value1
+  #   key2: value2
+
+# -----------------------------------------------------------------------------------------------------------
+# Azure Key Vault secrets to be deployed
+
+akvSecrets:
+  # exampleSecret:
+  #   # The name of the Azure Key Vault from which to pull the secret
+  #   vaultName: example-vault
+  #
+  #   # The name of the secret as it appears in Azure Key Vault
+  #   secretName: example-secret
+  #
+  #   # The type of the secret in Azure Key Vault
+  #   secretType: multi-key-vault-secret
+  #
+  #   # An optional field representing the content type of the Azure Key Vault secret (for unmarshalling)
+  #   secretContentType: application/x-yaml
+  #
+  #   # An optional field representing the `type` property attached to the resulting k8s secret
+  #   targetType: kubernetes.io/tls
+  #
+  #   # An optional field representing the key to place the secret's data under in the resulting k8s secret
+  #   # This is useful for unstructured secrets (secretType: secret)
+  #   targetKey: exampleKey

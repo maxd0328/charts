@@ -1,0 +1,53 @@
+# This file creates an HTTPProxy for the application, if requested
+# Refer to `.proxy` in `values.yaml`
+#
+# HTTPProxy is a CRD from the Contour project, which aims to replace
+# and expand the functionality of the Ingress API
+
+{{- if .Values.proxy.enabled -}}
+{{- $serviceName := include "metadata.releaseName" . -}}
+---
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: {{ include "metadata.releaseName" . }}
+  labels:
+    {{- include "metadata.labels" . | nindent 4 }}
+spec:
+  {{- with .Values.proxy.ingressClassName }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  virtualhost:
+    fqdn: {{ .Values.proxy.host }}
+    {{- with .Values.proxy.tls }}
+    tls:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  routes:
+    {{- range .Values.proxy.routes }}
+    - services:
+        - name: {{ $serviceName }}
+          port: {{ .servicePort }}
+      {{- with .conditions }}
+      conditions:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .permitInsecure }}
+      permitInsecure: {{ . }}
+      {{- end }}
+    {{- end }}
+    {{- range .Values.proxy.externalRoutes }}
+    - services:
+        {{- range .services }}
+        -
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .conditions }}
+      conditions:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .permitInsecure }}
+      permitInsecure: {{ . }}
+      {{- end }}
+    {{- end }}
+{{- end -}}

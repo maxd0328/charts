@@ -1,0 +1,83 @@
+# =======================================================================================================
+# This file serves as the default values file for the GitOps chart, as well a template for creating new
+# GitOps environments using this chart
+# =======================================================================================================
+
+# -------------------------------------------------------------------------------------------------------
+# Meta-configuration for customizing this chart
+config:
+  # Which GitOps tooling to use. Currently supported options are: 'argo'
+  gitopsTool: ''
+
+  # Which namespace to deploy generated GitOps resources into
+  gitopsNamespace: ''
+
+  # The default Helm chart for all apps which are deployed by this chart
+  commonChart:
+    repoURL: ''   # Repository URL
+    version: ''   # Target revision
+
+    # Use one of the two following attributes:
+    # path: ''    # The path of the chart within the repository
+    # name: ''    # The name of the chart within the repository
+
+# =======================================================================================================
+# Base configuration - This defines the set of apps and extras to be deployed by this chart
+base:
+
+  # -----------------------------------------------------------------------------------------------------
+  # The set of apps to deploy, with the base values file to pass to each app given as a string
+  apps: {}
+    # example-app: |
+    #   exampleConfig1: 123
+    #   exampleConfig2: 456
+
+  # -----------------------------------------------------------------------------------------------------
+  # The set of extra resources to deploy, with the base manifests of each one given as a string
+  extras: {}
+    # example-extra: |
+    #   apiVersion: v1
+    #   kind: Namespace
+    #   metadata:
+    #     name: example-extra
+
+# =======================================================================================================
+# Environment configuration - This specifies environment-specific config and overrides
+environment:
+
+  # -----------------------------------------------------------------------------------------------------
+  # Optional configuration and overrides for each app
+  apps: {}
+    # example-app:
+    #   disable: false    # App will be disabled if this is set to true
+    #   namespace: ''     # Namespace to release the app into, default is this chart's release namespace
+    #   chart:            # Override the common chart and use a specific chart for this application
+    #     repoURL: ''
+    #     version: ''
+    #     path: ''
+    #     name: ''
+    #
+    #   patches: {}       # Patch the values file given in the base configuration
+    #
+    #   ...               # Any additional attributes here will be available for use in templates present
+    #                     # in the app's base configuration
+
+  # -----------------------------------------------------------------------------------------------------
+  # Optional configuration and overrides for each extra
+  extras: {}
+    # example-extra:
+    #   disable: false    # Extra will be disabled if this is set to true
+    #   
+    #   patches: {}       # Patch the manifest given in the base configuration
+    #
+    #   ...               # Any additional attributes here will be available for use in templates present
+    #                     # in the extra's base manifest
+
+  # -----------------------------------------------------------------------------------------------------
+  # Global configuration - Any attributes here will be available for use in templates in the base
+  # configuration, under the key `.global`
+  global: {}
+
+  # -----------------------------------------------------------------------------------------------------
+  # Any additional manifests specified here will be deployed
+  inline: []

@@ -1,0 +1,48 @@
+# This file creates an ingress for the application, if requested
+# Refer to `.ingress` in `values.yaml`
+
+{{- if .Values.ingress.enabled -}}
+{{- $serviceName := include "metadata.releaseName" . -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "metadata.releaseName" . }}
+  labels:
+    {{- include "metadata.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- with .pathType }}
+            pathType: {{ . }}
+            {{- end }}
+            backend:
+              service:
+                name: {{ $serviceName }}
+                port:
+                  {{- toYaml .port | nindent 18 }}
+          {{- end }}
+          {{- range .externalPaths }}
+          - path: {{ .path }}
+            {{- with .pathType }}
+            pathType: {{ . }}
+            {{- end }}
+            backend:
+              {{- toYaml .backend | nindent 14 }}
+          {{- end }}
+    {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end -}}

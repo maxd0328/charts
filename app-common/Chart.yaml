@@ -1,0 +1,14 @@
+# This file contains metadata about the Helm chart
+
+# Identifying chart information
+apiVersion: v2
+name: common-helm-chart
+description: A common Helm chart for deploying custom applications
+
+# A chart can be either an `application` or `library` chart. In our case we will always use `application`
+# (See https://helm.sh/docs/topics/charts/#chart-types)
+type: application
+
+# Version of the universal helm chart. This is expected to follow SemVer and should be bumped whenever
+# changes to this chart are made
+version: '0.1.0'

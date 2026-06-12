@@ -1,0 +1,54 @@
+{{- /* This file renders the GitOps application template for each application present in base.
+       It is designed to be GitOps-tooling-agnostic, supporting arbitrary GitOps plugins */}}
+
+{{- /* Store global context for use later */}}
+{{- $context := . }}
+
+{{- /* Iterate over every app present in base */}}
+{{- range $k, $v := .Values.base.apps }}
+
+{{- $disable := false }}
+{{- $patches := dict }}
+{{- $chart := dict }}
+{{- $namespace := $context.Release.Namespace }}
+{{- $appContext := dict }}
+
+{{- /* Collect all environment-specific configuration for the app */}}
+{{- if hasKey $context.Values.environment.apps $k }}
+  {{- $disable = (index $context.Values.environment.apps $k).disable | default false }}
+  {{- $patches = (index $context.Values.environment.apps $k).patches | default dict }}
+  {{- $chart = (index $context.Values.environment.apps $k).chart | default dict }}
+  {{- $namespace = (index $context.Values.environment.apps $k).namespace | default $context.Release.Namespace }}
+
+  {{- /* Create the app's context object out of local and global config */}}
+  {{- $appContext = deepCopy (index $context.Values.environment.apps $k) }}
+  {{- $_ := unset $appContext "disable" }}
+  {{- $_ := unset $appContext "patches" }}
+  {{- $_ := unset $appContext "chart" }}
+  {{- $_ := unset $appContext "namespace" }}
+{{- end }}
+
+{{- /* Add additional app context */}}
+{{- $_ := set $appContext "global" $context.Values.environment.global }}
+{{- $_ := set $appContext "Release" $context.Release }}
+{{- $_ := set $appContext "namespace" $namespace }}
+
+{{- /* Render and patch the application values file */}}
+{{- $appValues := tpl $v $appContext | fromYaml }}
+{{- $patchedAppValues := mergeOverwrite $appValues $patches }}
+
+{{- /* Collect some metadata about how to deploy the chart */}}
+{{- $name := printf "%s-%s" $context.Release.Name $k }}
+{{- $gitopsNamespace := $context.Values.config.gitopsNamespace | default $context.Release.Namespace }}
+{{- $mergedChart := mergeOverwrite (deepCopy $context.Values.config.commonChart) $chart }}
+
+{{- /* Create the args object to pass to the GitOps tooling app renderer */}}
+{{- $args := dict "name" $name "chart" $mergedChart "namespace" $namespace "gitopsNamespace" $gitopsNamespace "values" $patchedAppValues }}
+
+{{- /* Render the application */}}
+{{- if not $disable }}
+---
+{{ include $context.Values.config.gitopsTool $args }}
+{{- end }}
+  
+{{- end }}

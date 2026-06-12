@@ -1,0 +1,39 @@
+{{- /* This file renders each extra resource present in the base configuration,
+       configured and patched by the environment configuration */}}
+
+{{- /* Store global context for use later */}}
+{{- $context := . }}
+
+{{- /* Iterate over every extra present in base */}}
+{{- range $k, $v := .Values.base.extras }}
+
+{{- $disable := false }}
+{{- $patches := dict }}
+{{- $extrasContext := dict }}
+
+{{- /* Collect all environment-specific configuration for the extra */}}
+{{- if hasKey $context.Values.environment.extras $k }}
+  {{- $disable = (index $context.Values.environment.extras $k).disable | default false }}
+  {{- $patches = (index $context.Values.environment.extras $k).patches | default dict }}
+
+  {{- /* Create the extra's context object out of local and global config */}}
+  {{- $extrasContext = deepCopy (index $context.Values.environment.extras $k) }}
+  {{- $_ := unset $extrasContext "disable" }}
+  {{- $_ := unset $extrasContext "patches" }}
+{{- end }}
+
+{{- /* Add additional extras context */}}
+{{- $_ := set $extrasContext "global" $context.Values.environment.global }}
+{{- $_ := set $extrasContext "Release" $context.Release }}
+
+{{- /* Render and patch the extra's manifest */}}
+{{- $extrasObject := tpl $v $extrasContext | fromYaml }}
+{{- $patchedExtrasObject := mergeOverwrite $extrasObject $patches }}
+
+{{- /* Render the extra */}}
+{{- if not $disable }}
+---
+{{ toYaml $patchedExtrasObject }}
+{{- end }}
+
+{{- end }}

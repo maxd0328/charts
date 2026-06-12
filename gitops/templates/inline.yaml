@@ -1,0 +1,6 @@
+{{- /* This file renders all inline resources defined in the environment configuration */}}
+
+{{- range .Values.environment.inline }}
+---
+{{ toYaml . }}
+{{- end }}
