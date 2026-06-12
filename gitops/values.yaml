@@ -12,6 +12,12 @@ config:
   # Which namespace to deploy generated GitOps resources into
   gitopsNamespace: ''
 
+  # Name prefix to use for deployed applications, default is release name
+  prefix: ''
+
+  # If this value is true, deployed applications will have no prefix
+  noPrefix: false
+
   # The default Helm chart for all apps which are deployed by this chart
   commonChart:
     repoURL: ''   # Repository URL

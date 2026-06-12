@@ -9,7 +9,7 @@
 
 {{- $disable := false }}
 {{- $patches := dict }}
-{{- $chart := dict }}
+{{- $chart := $context.Values.config.commonChart }}
 {{- $namespace := $context.Release.Namespace }}
 {{- $appContext := dict }}
 
@@ -17,7 +17,7 @@
 {{- if hasKey $context.Values.environment.apps $k }}
   {{- $disable = (index $context.Values.environment.apps $k).disable | default false }}
   {{- $patches = (index $context.Values.environment.apps $k).patches | default dict }}
-  {{- $chart = (index $context.Values.environment.apps $k).chart | default dict }}
+  {{- $chart = (index $context.Values.environment.apps $k).chart | default $context.Values.config.commonChart }}
   {{- $namespace = (index $context.Values.environment.apps $k).namespace | default $context.Release.Namespace }}
 
   {{- /* Create the app's context object out of local and global config */}}
@@ -38,12 +38,14 @@
 {{- $patchedAppValues := mergeOverwrite $appValues $patches }}
 
 {{- /* Collect some metadata about how to deploy the chart */}}
-{{- $name := printf "%s-%s" $context.Release.Name $k }}
+{{- $name := $k }}
+{{- if not $context.Values.config.noPrefix }}
+  {{- $name = printf "%s-%s" ($context.Values.config.prefix | default $context.Release.Name) $k }}
+{{- end }}
 {{- $gitopsNamespace := $context.Values.config.gitopsNamespace | default $context.Release.Namespace }}
-{{- $mergedChart := mergeOverwrite (deepCopy $context.Values.config.commonChart) $chart }}
 
 {{- /* Create the args object to pass to the GitOps tooling app renderer */}}
-{{- $args := dict "name" $name "chart" $mergedChart "namespace" $namespace "gitopsNamespace" $gitopsNamespace "values" $patchedAppValues }}
+{{- $args := dict "name" $name "chart" $chart "namespace" $namespace "gitopsNamespace" $gitopsNamespace "values" $patchedAppValues }}
 
 {{- /* Render the application */}}
 {{- if not $disable }}
