@@ -57,9 +57,9 @@ spec:
             - name: RELATED_IMAGE_KEYCLOAK
               value: quay.io/keycloak/keycloak:26.6.3
             - name: QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKREALMIMPORTCONTROLLER_NAMESPACES
-              value: JOSDK_WATCH_CURRENT
+              value: '' # instead of JOSDK_WATCH_CURRENT, watch all namespaces
             - name: QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKCONTROLLER_NAMESPACES
-              value: JOSDK_WATCH_CURRENT
+              value: '' # instead of JOSDK_WATCH_CURRENT, watch all namespaces
           image: quay.io/keycloak/keycloak-operator:{{ .Chart.AppVersion }}
           imagePullPolicy: Always
           livenessProbe:
