@@ -288,7 +288,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keycloak-operator
     app.kubernetes.io/version: 26.6.3
-  name: keycloakrealmimportcontroller-role-binding
+  name: keycloakrealmimportcontroller-clusterrole-binding
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
@@ -296,6 +296,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: keycloak-operator
+    namespace: keycloak
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -303,7 +304,7 @@ metadata:
   labels:
     app.kubernetes.io/name: keycloak-operator
     app.kubernetes.io/version: 26.6.3
-  name: keycloakcontroller-role-binding
+  name: keycloakcontroller-clusterrole-binding
 roleRef:
   kind: ClusterRole
   apiGroup: rbac.authorization.k8s.io
@@ -311,6 +312,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: keycloak-operator
+    namespace: keycloak
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
