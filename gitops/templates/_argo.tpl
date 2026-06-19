@@ -1,48 +1,48 @@
 {{- /* GitOps renderer for ArgoCD */ -}}
 
 {{- /* To create a renderer for different GitOps tooling, create a new `tpl` file with a
-       named template. This renderer will be used when the `gitopsTool` value matches
-       the name of the named template.
+       named template. This renderer will be used when the `GitOps-Chart/resource-type`
+       field of a particular resource manifest matches the name of the named template.
 
        The context object passed into the renderer will contain the following attribs:
-        * `name` - The name that should be used for the application GitOps resource(s)
-        * `gitopsNamespace` - The namespace into which to deploy GitOps resource(s)
-        * `namespace` - The release namespace for the app being deployed
-        * `chart` - Details about the Helm chart which should be deployed for this app
-          * This attribute contains `repoURL`, `version`, and one of `path` or `name`
-        * `values` - Object (not YAML) containing the values to supply the Helm chart
+        * `name` - The name of the resource (the key under which it is defined)
+        * `global` - A reference to the `global` configuration of this chart (see values.yaml)
+        * `manifest` - The patched manifest of this resource as an object (not YMAL)
+        * `Chart` - Metadata about the GitOps chart (reference to .Chart)
+        * `Release` - Metadata about this release of the GitOps chart (reference to .Release)
 */ -}}
 
-{{- define "argo" -}}
+{{- define "argocd-application" -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .name }}
-  namespace: {{ .gitopsNamespace }}
+  name: {{ if .global.noPrefix }}{{ .name }}{{ else }}{{ printf "%s-%s" (default .Release.Name .global.prefix) .name }}{{ end }}
+  namespace: {{ .global.gitopsNamespace | default .Release.Namespace }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
-    namespace: {{ .namespace }}
+    namespace: {{ .manifest.namespace | default .Release.Namespace }}
     server: https://kubernetes.default.svc
   project: default
   source:
-    repoURL: {{ .chart.repoURL }}
-    {{- with .chart.path }}
+    {{- with default .global.commonChrat .manifest.chart }}
+    repoURL: {{ .repoURL }}
+    {{- with .path }}
     path: {{ . }}
     {{- end }}
-    {{- with .chart.name }}
+    {{- with .name }}
     chart: {{ . }}
     {{- end }}
-    targetRevision: {{ .chart.version }}
+    targetRevision: {{ .version }}
+    {{- end }}
     helm:
       values: |
-        {{- toYaml .values | nindent 8 }}
+        {{- toYaml .manifest.values | nindent 8 }}
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
 {{- end -}}

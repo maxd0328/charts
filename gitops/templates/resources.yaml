@@ -1,0 +1,49 @@
+{{- /* This file renders each resource present in the base configuration,
+       configured and patched by the environment configuration */}}
+
+{{- /* Store global context for use later */}}
+{{- $context := . }}
+
+{{- /* Create the context object to send to the base templates */}}
+{{- $baseContext := dict "config" .Values.config "Release" .Release "Chart" .Chart }}
+
+{{- /* Iterate over every extra present in base */}}
+{{- range $k, $v := .Values.base }}
+
+{{- $disable := false }}
+{{- $overlay := dict }}
+
+{{- /* If an overlay is provided, set the overlay variable or set disabled
+       to true if the overlay disables the resource */}}
+{{- if hasKey $context.Values.overlays $k }}
+  {{- if eq (kindOf (index $context.Values.overlays $k)) "string" }}
+    {{- if eq (index $context.Values.overlays $k) "disable" }}
+      {{- $disable = true }}
+    {{- end }}
+  {{- else if eq (kindOf (index $context.Values.overlays $k)) "map" }}
+    {{- $overlay = index $context.Values.overlays $k }}
+  {{- end }}
+{{- end }}
+
+{{- if not $disable }}
+  {{- /* Apply the overlay to the base configuration */}}
+  {{- $resource := tpl $v $baseContext | fromYaml }}
+  {{- $patchedResource := mergeOverwrite $resource $overlay }}
+
+  {{- /* If this resource has a special resource type, render the named template
+         for that resource type to generate the manifest, otherwise just used the
+         patched manifest as a native Kubernetes resource */}}
+  {{- $finalManifest := "" }}
+  {{- if hasKey $patchedResource "GitOps-Chart/resource-type" }}
+    {{- $args := dict "name" $k "Release" $context.Release "Chart" $context.Chart "global" $context.Values.global "manifest" $patchedResource }}
+    {{- $finalManifest = include (index $patchedResource "GitOps-Chart/resource-type") $args }}
+  {{- else }}
+    {{- $finalManifest = toYaml $patchedResource }}
+  {{- end }}
+
+  {{- /* Render the final manifest */}}
+---
+  {{- $finalManifest | nindent 0 }}
+{{- end }}
+
+{{- end }}
