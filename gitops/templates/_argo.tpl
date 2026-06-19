@@ -16,7 +16,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ if .global.noPrefix }}{{ kebabcase .name }}{{ else }}{{ printf "%s-%s" (default .Release.Name .global.prefix) kebabcase .name }}{{ end }}
+  name: {{ if .global.noPrefix }}{{ kebabcase .name }}{{ else }}{{ printf "%s-%s" (default .Release.Name .global.prefix) (kebabcase .name) }}{{ end }}
   namespace: {{ .global.gitopsNamespace | default .Release.Namespace }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
